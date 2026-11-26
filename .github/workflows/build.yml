@@ -1,0 +1,37 @@
+
+name: Build do Projeto Hotel
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Configurar .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restaurar dependências
+        run: dotnet restore
+
+      - name: Gerar executável
+        run: dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+
+      - name: Disponibilizar artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: executavel-hotel
+          path: '**/bin/Release/net8.0/win-x64/publish/'
