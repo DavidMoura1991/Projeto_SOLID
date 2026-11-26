@@ -28,10 +28,14 @@ jobs:
         run: dotnet restore
 
       - name: Gerar executável
-        run: dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+        run: dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ./publish
+
+      - name: Verificar arquivos gerados
+        run: dir ./publish
 
       - name: Disponibilizar artefato
         uses: actions/upload-artifact@v4
         with:
           name: executavel-hotel
-          path: '**/bin/Release/net8.0/win-x64/publish/'
+          path: ./publish/**
+          if-no-files-found: error
