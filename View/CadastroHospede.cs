@@ -1,36 +1,21 @@
-﻿using Projeto_SOLID.Model;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Projeto_SOLID.Model;
 
-namespace Projeto_SOLID.View
+namespace Projeto_SOLID.View;
+
+public class CadastroHospede : ICadastroView<Hospede>
 {
-    internal class CadastroHospede : ICadastroView<Hospede>
+    public Hospede ObterDados()
     {
-        public Hospede ObterDados()
-        {
-            Console.WriteLine("Nome:");
-            string nome = Console.ReadLine() ?? "";
-
-            Console.WriteLine("CPF:");
-            string cpf = Console.ReadLine() ?? "";
-
-            Console.WriteLine("Email:");
-            string email = Console.ReadLine() ?? "";
-
-            Console.WriteLine("Telefone:");
-            string telefone = Console.ReadLine() ?? "";
-
-            return new Hospede(0, nome, cpf, email, telefone);
-        }
-
-        public void ExibirMensagem(string mensagem)
-        {
-            Console.WriteLine($"\n{mensagem}");
-            Console.WriteLine("\nPressione ENTER para continuar...");
-            Console.ReadLine();
-        }
+        Console.Write("Nome: ");
+        string nome = Console.ReadLine() ?? "";
+        Console.Write("CPF: ");
+        string cpf = Console.ReadLine() ?? "";
+        Console.Write("E-mail: ");
+        string email = Console.ReadLine() ?? "";
+        Console.Write("Telefone: ");
+        string telefone = Console.ReadLine() ?? "";
+        return new Hospede(0, nome, cpf, email, telefone);
     }
+
+    public void ExibirMensagem(string mensagem) => Console.WriteLine(mensagem);
 }

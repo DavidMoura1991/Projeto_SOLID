@@ -1,14 +1,8 @@
-﻿using Projeto_SOLID.Model;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Projeto_SOLID.Model;
 
-namespace Projeto_SOLID.View
+namespace Projeto_SOLID.View;
+
+public interface IHospedeView
 {
-    internal interface IHospedeView
-    {
-        void MostrarHospede(Hospede hospede);
-    }
+    void MostrarHospede(Hospede hospede);
 }

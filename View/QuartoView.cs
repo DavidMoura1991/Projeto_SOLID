@@ -1,23 +1,14 @@
-﻿using Projeto_SOLID.Model;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Projeto_SOLID.Model;
 
-namespace Projeto_SOLID.View
+namespace Projeto_SOLID.View;
+
+public class QuartoView : IQuartoView
 {
-    internal class QuartoView : IQuartoView
+    public void MostrarQuarto(Quarto q)
     {
-        public void MostrarQuarto(Quarto quarto)
-        {
-            Console.WriteLine(
-                $"ID: {quarto.Id} | " +
-                $"Número: {quarto.Numero} | " +
-                $"Tipo: {quarto.Tipo} | " +
-                $"Capacidade: {quarto.Capacidade} pessoas | " +
-                $"Diária: {quarto.PrecoDiaria:C}"
-            );
-        }
+        Console.WriteLine($"ID: {q.Id} | Número: {q.Numero} | Tipo: {q.Tipo}");
+        Console.WriteLine($"Capacidade: {q.Capacidade} | Diária: {q.PrecoDiaria:C}");
+        Console.WriteLine($"Descrição: {q.Descricao}");
+        Console.WriteLine(new string('-', 55));
     }
 }

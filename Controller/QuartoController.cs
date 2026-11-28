@@ -1,183 +1,104 @@
-﻿using Projeto_SOLID.Dados;
+using Projeto_SOLID.dados;
 using Projeto_SOLID.Model;
 using Projeto_SOLID.View;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Projeto_SOLID.Controller
+namespace Projeto_SOLID.Controller;
+
+public class QuartoController
 {
-    internal class QuartoController
+    private readonly IRepository<Quarto> repository;
+    private readonly IQuartoView view;
+    private readonly ICadastroView<Quarto> cadastroView;
+    private readonly Func<int, bool>? possuiReserva;
+
+    public QuartoController(IRepository<Quarto> repository, IQuartoView view,
+                            ICadastroView<Quarto> cadastroView, Func<int, bool>? possuiReserva = null)
     {
-        private readonly IRepository<Quarto> repository;
-        private readonly IQuartoView view;
-        private readonly ICadastroView<Quarto> cadastroView;
+        this.repository = repository;
+        this.view = view;
+        this.cadastroView = cadastroView;
+        this.possuiReserva = possuiReserva;
+    }
 
-        public QuartoController(
-            IRepository<Quarto> repository,
-            IQuartoView view,
-            ICadastroView<Quarto> cadastroView)
+    public void Cadastrar()
+    {
+        try
         {
-            this.repository = repository;
-            this.view = view;
-            this.cadastroView = cadastroView;
+            Quarto quarto = cadastroView.ObterDados();
+            if (repository.ListarTodos().Any(q => q.Numero == quarto.Numero))
+                throw new InvalidOperationException("Já existe um quarto com esse número.");
+            quarto.AtualizarId(ProximoId());
+            repository.Adicionar(quarto);
+            cadastroView.ExibirMensagem("Quarto cadastrado com sucesso!");
         }
+        catch (Exception ex) { cadastroView.ExibirMensagem($"Não foi possível cadastrar: {ex.Message}"); }
+    }
 
-        public void Cadastrar()
+    private int ProximoId()
+    {
+        List<Quarto> lista = repository.ListarTodos();
+        return lista.Count == 0 ? 1 : lista.Max(q => q.Id) + 1;
+    }
+
+    public void Listar()
+    {
+        List<Quarto> lista = repository.ListarTodos();
+        if (lista.Count == 0) { Console.WriteLine("Nenhum quarto cadastrado."); return; }
+        foreach (Quarto q in lista) view.MostrarQuarto(q);
+    }
+
+    public Quarto Buscar(int id) => repository.BuscarPorId(id);
+
+    public void BuscarEExibir()
+    {
+        try
         {
-            try
-            {
-                Quarto quarto = cadastroView.ObterDados();
-
-                bool numeroExiste = repository.ListarTodos()
-                    .Any(q => q.Numero == quarto.Numero);
-
-                if (numeroExiste)
-                {
-                    cadastroView.ExibirMensagem(
-                        "Já existe um quarto com esse número."
-                    );
-                    return;
-                }
-
-                List<Quarto> quartos = repository.ListarTodos();
-
-                int id = 1;
-
-                if (quartos.Count > 0)
-                    id = quartos.Max(q => q.Id) + 1;
-
-                quarto.AtualizarId(id);
-
-                repository.Adicionar(quarto);
-
-                cadastroView.ExibirMensagem(
-                    "Quarto cadastrado com sucesso!"
-                );
-            }
-            catch (Exception ex)
-            {
-                cadastroView.ExibirMensagem(
-                    "Erro ao cadastrar quarto: " + ex.Message
-                );
-            }
+            Console.Write("ID do quarto: ");
+            int id = LerId();
+            view.MostrarQuarto(Buscar(id));
         }
+        catch (Exception ex) { Console.WriteLine($"Erro: {ex.Message}"); }
+    }
 
-        public void Listar()
+    public void Atualizar(int id)
+    {
+        try
         {
-            List<Quarto> quartos = repository.ListarTodos();
-
-            Console.WriteLine("===== LISTA DE QUARTOS =====");
-
-            if (quartos.Count == 0)
-            {
-                Console.WriteLine("Nenhum quarto cadastrado.");
-                return;
-            }
-
-            foreach (Quarto quarto in quartos)
-            {
-                view.MostrarQuarto(quarto);
-            }
+            Quarto atual = Buscar(id);
+            Console.WriteLine("Digite os novos dados:");
+            Quarto dados = cadastroView.ObterDados();
+            if (repository.ListarTodos().Any(q => q.Id != id && q.Numero == dados.Numero))
+                throw new InvalidOperationException("Outro quarto já utiliza esse número.");
+            atual.Atualizar(dados.Numero, dados.Tipo, dados.Capacidade, dados.PrecoDiaria, dados.Descricao);
+            cadastroView.ExibirMensagem("Quarto atualizado com sucesso!");
         }
+        catch (Exception ex) { cadastroView.ExibirMensagem($"Não foi possível atualizar: {ex.Message}"); }
+    }
 
-        public Quarto Buscar(int id)
-        {
-            return repository.BuscarPorId(id);
-        }
+    public void AtualizarSolicitado()
+    {
+        Console.Write("ID do quarto que deseja atualizar: ");
+        try { Atualizar(LerId()); }
+        catch (Exception ex) { Console.WriteLine($"Erro: {ex.Message}"); }
+    }
 
-        public void BuscarEExibir(int id)
-        {
-            Quarto quarto = Buscar(id);
+    public void Remover(int id)
+    {
+        try { if (possuiReserva?.Invoke(id) == true) throw new InvalidOperationException("Não é possível excluir: o quarto possui reservas ativas. Cancele-as primeiro."); repository.Remover(id); Console.WriteLine("Quarto removido."); }
+        catch (Exception ex) { Console.WriteLine($"Não foi possível remover: {ex.Message}"); }
+    }
 
-            if (quarto == null)
-            {
-                Console.WriteLine("Quarto não encontrado.");
-                return;
-            }
+    public void RemoverSolicitado()
+    {
+        Console.Write("ID do quarto que deseja remover: ");
+        try { Remover(LerId()); }
+        catch (Exception ex) { Console.WriteLine($"Erro: {ex.Message}"); }
+    }
 
-            view.MostrarQuarto(quarto);
-        }
-
-        public void Atualizar(int id)
-        {
-            try
-            {
-                Quarto quartoExistente = Buscar(id);
-
-                if (quartoExistente == null)
-                {
-                    cadastroView.ExibirMensagem(
-                        "Quarto não encontrado."
-                    );
-                    return;
-                }
-
-                Console.WriteLine("Digite os novos dados do quarto:");
-
-                Quarto novosDados = cadastroView.ObterDados();
-
-                bool numeroDuplicado = repository.ListarTodos()
-                    .Any(q => q.Numero == novosDados.Numero && q.Id != id);
-
-                if (numeroDuplicado)
-                {
-                    cadastroView.ExibirMensagem(
-                        "Já existe outro quarto com esse número."
-                    );
-                    return;
-                }
-
-                quartoExistente.Atualizar(
-                    novosDados.Numero,
-                    novosDados.Tipo,
-                    novosDados.Capacidade,
-                    novosDados.PrecoDiaria,
-                    novosDados.Descricao
-                );
-
-                repository.Atualizar(quartoExistente);
-
-                cadastroView.ExibirMensagem(
-                    "Quarto atualizado com sucesso!"
-                );
-            }
-            catch (Exception ex)
-            {
-                cadastroView.ExibirMensagem(
-                    "Erro ao atualizar quarto: " + ex.Message
-                );
-            }
-        }
-
-        public void Remover(int id)
-        {
-            try
-            {
-                Quarto quarto = Buscar(id);
-
-                if (quarto == null)
-                {
-                    cadastroView.ExibirMensagem(
-                        "Quarto não encontrado."
-                    );
-                    return;
-                }
-
-                repository.Remover(id);
-
-                cadastroView.ExibirMensagem(
-                    "Quarto removido com sucesso!"
-                );
-            }
-            catch (Exception ex)
-            {
-                cadastroView.ExibirMensagem(
-                    "Erro ao remover quarto: " + ex.Message
-                );
-            }
-        }
+    private static int LerId()
+    {
+        if (!int.TryParse(Console.ReadLine(), out int id) || id <= 0)
+            throw new ArgumentException("Informe um ID inteiro positivo.");
+        return id;
     }
 }

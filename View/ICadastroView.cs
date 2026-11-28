@@ -1,14 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+namespace Projeto_SOLID.View;
 
-namespace Projeto_SOLID.View
+public interface ICadastroView<T>
 {
-    internal interface ICadastroView<T>
-    {
-        T ObterDados();
-        void ExibirMensagem(string mensagem);
-    }
+    T ObterDados();
+    void ExibirMensagem(string mensagem);
 }

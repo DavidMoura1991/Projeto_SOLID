@@ -1,23 +1,13 @@
-﻿using Projeto_SOLID.Model;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Projeto_SOLID.Model;
 
-namespace Projeto_SOLID.View
+namespace Projeto_SOLID.View;
+
+public class HospedeView : IHospedeView
 {
-    internal class HospedeView : IHospedeView
+    public void MostrarHospede(Hospede h)
     {
-        public void MostrarHospede(Hospede hospede)
-        {
-            Console.WriteLine(
-                $"ID: {hospede.Id} | " +
-                $"Nome: {hospede.Nome} | " +
-                $"CPF: {hospede.CPF} | " +
-                $"Email: {hospede.Email} | " +
-                $"Telefone: {hospede.Telefone}"
-            );
-        }
+        Console.WriteLine($"ID: {h.Id} | Nome: {h.Nome} | CPF: {h.CPF}");
+        Console.WriteLine($"E-mail: {h.Email} | Telefone: {h.Telefone}");
+        Console.WriteLine(new string('-', 55));
     }
 }

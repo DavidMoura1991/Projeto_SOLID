@@ -1,14 +1,8 @@
-﻿using Projeto_SOLID.Model;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Projeto_SOLID.Model;
 
-namespace Projeto_SOLID.View
+namespace Projeto_SOLID.View;
+
+public interface IQuartoView
 {
-    internal interface IQuartoView
-    {
-        void MostrarQuarto(Quarto quarto);
-    }
+    void MostrarQuarto(Quarto quarto);
 }

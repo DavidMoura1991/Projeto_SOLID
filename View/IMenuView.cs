@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+namespace Projeto_SOLID.View;
 
-namespace Projeto_SOLID.View
+public interface IMenuView
 {
-    internal interface IMenuView
-    {
-        int ExibirMenu();
-    }
+    int ExibirMenu();
 }

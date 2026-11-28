@@ -1,182 +1,113 @@
-﻿using Projeto_SOLID.Dados;
+using Projeto_SOLID.dados;
 using Projeto_SOLID.Model;
 using Projeto_SOLID.View;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Projeto_SOLID.Controller
+namespace Projeto_SOLID.Controller;
+
+public class HospedeController
 {
-    internal class HospedeController
+    private readonly IRepository<Hospede> repository;
+    private readonly IHospedeView view;
+    private readonly ICadastroView<Hospede> cadastroView;
+    private readonly Func<int, bool>? possuiReserva;
+
+    public HospedeController(IRepository<Hospede> repository, IHospedeView view,
+                             ICadastroView<Hospede> cadastroView, Func<int, bool>? possuiReserva = null)
     {
-        private readonly IRepository<Hospede> repository;
-        private readonly IHospedeView view;
-        private readonly ICadastroView<Hospede> cadastroView;
+        this.repository = repository;
+        this.view = view;
+        this.cadastroView = cadastroView;
+        this.possuiReserva = possuiReserva;
+    }
 
-        public HospedeController(
-            IRepository<Hospede> repository,
-            IHospedeView view,
-            ICadastroView<Hospede> cadastroView)
+    public void Cadastrar()
+    {
+        try
         {
-            this.repository = repository;
-            this.view = view;
-            this.cadastroView = cadastroView;
-        }
+            Hospede hospede = cadastroView.ObterDados();
+            if (repository.ListarTodos().Any(h => h.CPF.Equals(hospede.CPF, StringComparison.OrdinalIgnoreCase)))
+                throw new InvalidOperationException("Já existe um hóspede cadastrado com esse CPF.");
 
-        public void Cadastrar()
+            hospede.AtualizarId(ProximoId());
+            repository.Adicionar(hospede);
+            cadastroView.ExibirMensagem("Hóspede cadastrado com sucesso!");
+        }
+        catch (Exception ex) { cadastroView.ExibirMensagem($"Não foi possível cadastrar: {ex.Message}"); }
+    }
+
+    private int ProximoId()
+    {
+        List<Hospede> lista = repository.ListarTodos();
+        return lista.Count == 0 ? 1 : lista.Max(h => h.Id) + 1;
+    }
+
+    public void Listar()
+    {
+        List<Hospede> lista = repository.ListarTodos();
+        if (lista.Count == 0) { Console.WriteLine("Nenhum hóspede cadastrado."); return; }
+        foreach (Hospede h in lista) view.MostrarHospede(h);
+    }
+
+    public Hospede Buscar(int id) => repository.BuscarPorId(id);
+
+    public void BuscarEExibir()
+    {
+        try
         {
-            try
-            {
-                Hospede hospede = cadastroView.ObterDados();
-
-                bool cpfExiste = repository.ListarTodos()
-                    .Any(h => h.CPF == hospede.CPF);
-
-                if (cpfExiste)
-                {
-                    cadastroView.ExibirMensagem(
-                        "Já existe um hóspede cadastrado com esse CPF."
-                    );
-                    return;
-                }
-
-                List<Hospede> hospedes = repository.ListarTodos();
-
-                int id = 1;
-
-                if (hospedes.Count > 0)
-                    id = hospedes.Max(h => h.Id) + 1;
-
-                hospede.AtualizarId(id);
-
-                repository.Adicionar(hospede);
-
-                cadastroView.ExibirMensagem(
-                    "Hóspede cadastrado com sucesso!"
-                );
-            }
-            catch (Exception ex)
-            {
-                cadastroView.ExibirMensagem(
-                    "Erro ao cadastrar hóspede: " + ex.Message
-                );
-            }
+            Console.Write("ID do hóspede: ");
+            int id = LerId();
+            view.MostrarHospede(Buscar(id));
         }
+        catch (Exception ex) { Console.WriteLine($"Erro: {ex.Message}"); }
+    }
 
-        public void Listar()
+    public void Atualizar(int id)
+    {
+        try
         {
-            List<Hospede> hospedes = repository.ListarTodos();
-
-            Console.WriteLine("===== LISTA DE HÓSPEDES =====");
-
-            if (hospedes.Count == 0)
-            {
-                Console.WriteLine("Nenhum hóspede cadastrado.");
-                return;
-            }
-
-            foreach (Hospede hospede in hospedes)
-            {
-                view.MostrarHospede(hospede);
-            }
+            Hospede atual = Buscar(id);
+            Console.WriteLine("Digite os novos dados:");
+            Hospede dados = cadastroView.ObterDados();
+            bool cpfDuplicado = repository.ListarTodos()
+                .Any(h => h.Id != id && h.CPF.Equals(dados.CPF, StringComparison.OrdinalIgnoreCase));
+            if (cpfDuplicado) throw new InvalidOperationException("Outro hóspede já utiliza esse CPF.");
+            atual.Atualizar(dados.Nome, dados.CPF, dados.Email, dados.Telefone);
+            cadastroView.ExibirMensagem("Hóspede atualizado com sucesso!");
         }
+        catch (Exception ex) { cadastroView.ExibirMensagem($"Não foi possível atualizar: {ex.Message}"); }
+    }
 
-        public Hospede Buscar(int id)
+    public void AtualizarSolicitado()
+    {
+        Console.Write("ID do hóspede que deseja atualizar: ");
+        try { Atualizar(LerId()); }
+        catch (Exception ex) { Console.WriteLine($"Erro: {ex.Message}"); }
+    }
+
+    public void Remover(int id)
+    {
+        try
         {
-            return repository.BuscarPorId(id);
+            if (possuiReserva?.Invoke(id) == true)
+                throw new InvalidOperationException("Não é possível excluir: o hóspede possui reservas ativas. Cancele-as primeiro.");
+
+            repository.Remover(id);
+            Console.WriteLine("Hóspede removido.");
         }
+        catch (Exception ex) { Console.WriteLine($"Não foi possível remover: {ex.Message}"); }
+    }
 
-        public void BuscarEExibir(int id)
-        {
-            Hospede hospede = Buscar(id);
+    public void RemoverSolicitado()
+    {
+        Console.Write("ID do hóspede que deseja remover: ");
+        try { Remover(LerId()); }
+        catch (Exception ex) { Console.WriteLine($"Erro: {ex.Message}"); }
+    }
 
-            if (hospede == null)
-            {
-                Console.WriteLine("Hóspede não encontrado.");
-                return;
-            }
-
-            view.MostrarHospede(hospede);
-        }
-
-        public void Atualizar(int id)
-        {
-            try
-            {
-                Hospede hospedeExistente = Buscar(id);
-
-                if (hospedeExistente == null)
-                {
-                    cadastroView.ExibirMensagem(
-                        "Hóspede não encontrado."
-                    );
-                    return;
-                }
-
-                Console.WriteLine("Digite os novos dados do hóspede:");
-
-                Hospede novosDados = cadastroView.ObterDados();
-
-                bool cpfDuplicado = repository.ListarTodos()
-                    .Any(h => h.CPF == novosDados.CPF && h.Id != id);
-
-                if (cpfDuplicado)
-                {
-                    cadastroView.ExibirMensagem(
-                        "Esse CPF já pertence a outro hóspede."
-                    );
-                    return;
-                }
-
-                hospedeExistente.Atualizar(
-                    novosDados.Nome,
-                    novosDados.CPF,
-                    novosDados.Email,
-                    novosDados.Telefone
-                );
-
-                repository.Atualizar(hospedeExistente);
-
-                cadastroView.ExibirMensagem(
-                    "Hóspede atualizado com sucesso!"
-                );
-            }
-            catch (Exception ex)
-            {
-                cadastroView.ExibirMensagem(
-                    "Erro ao atualizar hóspede: " + ex.Message
-                );
-            }
-        }
-
-        public void Remover(int id)
-        {
-            try
-            {
-                Hospede hospede = Buscar(id);
-
-                if (hospede == null)
-                {
-                    cadastroView.ExibirMensagem(
-                        "Hóspede não encontrado."
-                    );
-                    return;
-                }
-
-                repository.Remover(id);
-
-                cadastroView.ExibirMensagem(
-                    "Hóspede removido com sucesso!"
-                );
-            }
-            catch (Exception ex)
-            {
-                cadastroView.ExibirMensagem(
-                    "Erro ao remover hóspede: " + ex.Message
-                );
-            }
-        }
+    private static int LerId()
+    {
+        if (!int.TryParse(Console.ReadLine(), out int id) || id <= 0)
+            throw new ArgumentException("Informe um ID inteiro positivo.");
+        return id;
     }
 }

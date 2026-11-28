@@ -1,41 +1,38 @@
-﻿using Projeto_SOLID.Model;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Projeto_SOLID.Model;
+using System.Globalization;
 
-namespace Projeto_SOLID.View
+namespace Projeto_SOLID.View;
+
+public class CadastroQuarto : ICadastroView<Quarto>
 {
-    internal class CadastroQuarto : ICadastroView<Quarto>
+    public Quarto ObterDados()
     {
-        public Quarto ObterDados()
-        {
-            Console.WriteLine("Número do quarto:");
-            int numero = int.Parse(Console.ReadLine() ?? "0");
-
-            Console.WriteLine("Tipo (Simples, Duplo, Suíte):");
-            string tipo = Console.ReadLine() ?? "";
-
-            Console.WriteLine("Capacidade:");
-            int capacidade = int.Parse(Console.ReadLine() ?? "0");
-
-            Console.WriteLine("Preço da diária:");
-            decimal preco = decimal.Parse(Console.ReadLine() ?? "0");
-
-            Console.WriteLine("Descrição:");
-            string descricao = Console.ReadLine() ?? "";
-
-            return new Quarto(
-                0, numero, tipo, capacidade, preco, descricao
-            );
-        }
-
-        public void ExibirMensagem(string mensagem)
-        {
-            Console.WriteLine(mensagem);
-            Console.WriteLine("Pressione ENTER para continuar...");
-            Console.ReadLine();
-        }
+        int numero = LerInt("Número do quarto: ");
+        Console.Write("Tipo (simples, duplo, suíte etc.): ");
+        string tipo = Console.ReadLine() ?? "";
+        int capacidade = LerInt("Capacidade: ");
+        decimal preco = LerDecimal("Preço da diária: ");
+        Console.Write("Descrição: ");
+        string descricao = Console.ReadLine() ?? "";
+        return new Quarto(0, numero, tipo, capacidade, preco, descricao);
     }
+
+    private static int LerInt(string rotulo)
+    {
+        Console.Write(rotulo);
+        if (!int.TryParse(Console.ReadLine(), out int valor))
+            throw new ArgumentException("Digite um número inteiro válido.");
+        return valor;
+    }
+
+    private static decimal LerDecimal(string rotulo)
+    {
+        Console.Write(rotulo);
+        string entrada = (Console.ReadLine() ?? "").Trim().Replace(',', '.');
+        if (!decimal.TryParse(entrada, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal valor))
+            throw new ArgumentException("Digite um preço válido. Exemplo: 150,00.");
+        return valor;
+    }
+
+    public void ExibirMensagem(string mensagem) => Console.WriteLine(mensagem);
 }

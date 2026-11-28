@@ -1,65 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Projeto_SOLID.Model;
 
-namespace Projeto_SOLID.Dados
+namespace Projeto_SOLID.dados;
+
+public class ListaQuartos : IRepository<Quarto>
 {
-    internal class ListaQuartos : IRepository<Quarto>
+    private readonly List<Quarto> quartos = new();
+
+    public void Adicionar(Quarto novo) => quartos.Add(novo);
+
+    public List<Quarto> ListarTodos() => quartos.ToList();
+
+    public Quarto BuscarPorId(int id) =>
+        quartos.FirstOrDefault(q => q.Id == id)
+        ?? throw new InvalidOperationException($"Nenhum quarto com ID {id} foi encontrado.");
+
+    public void Atualizar(Quarto entidade)
     {
-        private readonly List<Quarto> quartos;
-
-        public ListaQuartos()
-        {
-            quartos = new List<Quarto>();
-        }
-
-        public void Adicionar(Quarto quarto)
-        {
-            quartos.Add(quarto);
-        }
-
-        public List<Quarto> ListarTodos()
-        {
-            return quartos.ToList();
-        }
-
-        public Quarto BuscarPorId(int id)
-        {
-            return quartos.FirstOrDefault(q => q.Id == id);
-        }
-
-        public void Atualizar(Quarto entidade)
-        {
-            Quarto quarto = BuscarPorId(entidade.Id);
-
-            if (quarto == null)
-                throw new InvalidOperationException("Quarto não encontrado.");
-
-            quarto.Atualizar(
-                entidade.Numero,
-                entidade.Tipo,
-                entidade.Capacidade,
-                entidade.PrecoDiaria,
-                entidade.Descricao
-            );
-        }
-
-        public void Remover(Quarto quarto)
-        {
-            quartos.Remove(quarto);
-        }
-
-        public void Remover(int id)
-        {
-            Quarto quarto = BuscarPorId(id);
-
-            if (quarto == null)
-                throw new InvalidOperationException("Quarto não encontrado.");
-
-            Remover(quarto);
-        }
+        Quarto atual = BuscarPorId(entidade.Id);
+        atual.Atualizar(entidade.Numero, entidade.Tipo, entidade.Capacidade,
+                        entidade.PrecoDiaria, entidade.Descricao);
     }
+
+    public void Remover(Quarto entidade) => quartos.Remove(entidade);
+
+    public void Remover(int id) => Remover(BuscarPorId(id));
 }
